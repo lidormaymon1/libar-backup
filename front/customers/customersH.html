@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <style>
+        td button {
+            height: 40px;
+            width: 100px;
+            margin-top: 5px;
+            position: relative;
+            left: 190px;
+            background-color: #333;
+            border: none;
+            color: white;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+
+        td button:hover {
+            background-color: #525252;
+        }
+
+        input {
+            width: 100%;
+            height: 45px;
+            border-radius: 30px;
+        }
+
+        #editCustomerDisplay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            height: 550px;
+            width: 550px;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 30px;
+            box-shadow: 10px 0px 400px 10px rgba(51, 51, 51, 0.71);
+            -webkit-box-shadow: 10px 0px 400px 10px rgba(51, 51, 51, 0.71);
+            -moz-box-shadow: 10px 0px 400px 10px rgba(51, 51, 51, 0.71);
+            z-index: 100;
+            display: none;
+
+        }
+
+        #sumbitCustomer {
+            height: 50px;
+            width: 200px;
+            margin-top: 5px;
+            position: relative;
+            background-color: #333;
+            border: none;
+            color: white;
+            border-radius: 30px;
+            cursor: pointer;
+            left: 200px;
+            top: 50px;
+
+        }
+
+        #sumbitCustomer:hover {
+            background-color: #5e5c5c;
+        }
+
+        #closeButton {
+            font-size: 22px;
+            cursor: pointer;
+            position: relative;
+            left: 95%;
+        }
+    </style>
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.8/css/line.css">
+    <link rel="stylesheet" href="/front/styles.css">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.1.2/dist/axios.min.js"></script>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/front/index.html">Home</a></li>
+                <li><a href="/front/books/booksH.html">Books</a></li>
+                <li><a href="/front/customers/customersH.html">Customers</a></li>
+                <li><a href="/front/loans/loans.H.html">Loans</a></li>
+            </ul>
+        </nav>
+    </header>
+    <div class="subnavbar">
+        <ul>
+            <li><a href="customersH.html">List</a></li>
+            <li><a href="add_customer.html">Add customer</a></li>
+        </ul>
+    </div>
+    <div id="editCustomerDisplay">
+        <div class="container">
+            <i class="uil uil-multiply" id="closeButton" onclick="closeEdit()"></i>
+            <div class="title">Edit customer</div>
+            Name of the customer<br>
+            <input id="customer_name"><br>
+            City<br>
+            <input id="customer_city"><br>
+            Age<br>
+            <input id="customer_age"><br>
+            <button id="sumbitCustomer"">Sumbit</button>
+        </div>
+    </div>
+    <div class="title">Search customer by their name:</div><br>
+    <input type="search" id="searchCustomer" oninput="searchCustomer()" placeholder="Search..."><br>
+    <div id="searchMSG"></div>
+    <div class="title" id="count_customers"></div>
+    <div id="customersDisplay"></div>
+
+
+
+    <script>
+        const MY_SERVER = 'http://127.0.0.1:5000'
+        const showCustomers = async () => {
+            customers = await axios.get(MY_SERVER + '/show-customers');
+
+            customersDisplay.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name of customer</th>
+                            <th>City</th>
+                            <th>Age</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${customers.data.map(inf => `
+                        <tr>
+                            <td>${inf.id}</td>
+                            <td>${inf.name}</td>
+                            <td>${inf.city}</td>
+                            <td>${inf.age}</td>
+                            <td><button onclick="deleteCustomer(${inf.id})">Delete</button>
+                            <button onclick="updateCustomer(${inf.id})">Edit</button></td>
+                        </tr> `
+            )
+                    .join("")}
+                    </tbody>
+                </table>`
+        };
+
+        showCustomers()
+
+        const countCustomers = async () => {
+            const count = await axios.get(MY_SERVER + '/show-customers')
+            count_customers.innerHTML = `Customers record:${count.data.length}`
+        }
+
+        countCustomers()
+
+        const deleteCustomer = async (customerid) => {
+            await axios.delete(`${MY_SERVER}/deleteCustomer/${customerid}`)
+
+            showBooks()
+        }
+
+        const searchCustomer = async () => {
+            const searchCustomerCap = document.getElementById('searchCustomer')
+            const searchCustomer = searchCustomerCap.value.toLowerCase()
+
+            const response = await axios.get(`${MY_SERVER}/search-customers?search=${searchCustomer}`);
+            const filteredData = response.data
+
+            if (filteredData.some(info =>
+                info.name.toLowerCase().includes(searchCustomer))) {
+                customersDisplay.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name of customer</th>
+                            <th>City</th>
+                            <th>Age</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filteredData.map(inf => `
+                        <tr>
+                            <td>${inf.id}</td>
+                            <td>${inf.name}</td>
+                            <td>${inf.city}</td>
+                            <td>${inf.age}</td>
+                            <td><button onclick="deleteCustomer(${inf.id})">Delete</button>
+                            <button onclick="updateCustomer(${inf.id})">Edit</button></td>
+                        </tr> `
+                )
+                        .join("")}
+                    </tbody>
+                </table>`
+                searchMSG.innerHTML = ''
+            } else {
+                customersDisplay.innerHTML = ''
+                searchMSG.innerHTML = 'Customer not found'
+            }
+        };
+
+        const updateCustomer = async (id) => {
+            openEdit()
+            //Declaring viralbes for inputs
+            const customerName = document.getElementById('customer_name')
+            const city = document.getElementById('customer_city')
+            const age = document.getElementById('customer_age')
+            //Server virable
+            const customersServer = await axios.get(MY_SERVER + '/show-customers');
+            const customer = customersServer.data.find(data => data.id == id)
+            //Entering values of data to inputs
+            customerName.value = customer.name
+            city.value = customer.city
+            age.value = customer.age
+
+
+            const submitButton = document.getElementById('sumbitCustomer');
+            submitButton.addEventListener('click', () => {
+                submitEdit(id);
+            });
+
+        }
+
+        const submitEdit = async (bookID) => {
+            const customerName = document.getElementById('customer_name').value
+            const city = document.getElementById('customer_city').value
+            const age = document.getElementById('customer_age').value
+
+            const data = {
+                name: customerName,
+                city: city,
+                age: age
+            };
+
+            await axios.put(MY_SERVER + '/customers-update/' + bookID, data);
+        };
+
+
+        const openEdit = () => {
+            const displayEdit = document.getElementById('editCustomerDisplay')
+            displayEdit.style.display = 'block'
+            document.body.style.backgroundColor = '#DCDCDC'
+        }
+
+
+        const closeEdit = () => {
+            const displayEdit = document.getElementById('editCustomerDisplay')
+            displayEdit.style.display = 'none'
+            document.body.style.backgroundColor = '#fff'
+        }
+
+    </script>
+</body>
+
+</html>

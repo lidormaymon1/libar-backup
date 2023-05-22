@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <style>
+        td button {
+            height: 40px;
+            width: 100px;
+            margin-top: 5px;
+            position: relative;
+            left: 190px;
+            background-color: #333;
+            border: none;
+            color: white;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+
+        td button:hover {
+            background-color: #525252;
+        }
+    </style>
+    <link rel="stylesheet" href="/front/styles.css">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.1.2/dist/axios.min.js"></script>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/front/index.html">Home</a></li>
+                <li><a href="/front/books/booksH.html">Books</a></li>
+                <li><a href="/front/customers/customersH.html">Customers</a></li>
+                <li><a href="loansH.html">Loans</a></li>
+            </ul>
+        </nav>
+    </header>
+    <div class="subnavbar">
+        <ul>
+            <li><a href="loans.H.html">List</a></li>
+            <li><a href="loanbook.html">Loan</a></li>
+            <li><a href="expiredLoans.html">Expired Loans</a></li>
+        </ul>
+    </div>
+
+    <div class="title">Expired Dates:</div>
+    <div id="display"></div>
+
+    <script>
+        const MY_SERVER = 'http://127.0.0.1:5000'
+        const currentDate = new Date();
+        const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+        const currentDateFormat = currentDate.toLocaleDateString('en-GB', options);
+        console.log(currentDateFormat);
+
+
+        const showExpiredLoans = async () => {
+            loans = await axios.get(MY_SERVER + '/show-expired-loans');
+
+            display.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Customer ID</th>
+                            <th>Book ID</th>
+                            <th>Loan Date</th>
+                            <th>Return Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${loans.data.map(data => `
+                        <tr>
+                            <td>${data.id}</td>
+                            <td>${data.custid}</td>
+                            <td>${data.bookid}</td>
+                            <td>${data.loandate}</td>
+                            <td>${data.returndate}</td>
+                            <td><button onclick="returnLoan(${data.id})">Return</button>
+                            <button onclick="updateStud(${data.id})">Edit</button></td>
+                        </tr> `
+            )
+                    .join("")}
+                    </tbody>
+                </table>`
+        };
+
+        showExpiredLoans()
+
+    </script>
+
+
+</body>
+
+</html>

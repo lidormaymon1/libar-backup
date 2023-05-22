@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <style>
+        .container {
+            margin: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            background-color: #f5f5f5;
+
+        }
+
+        .container .title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .container input {
+            width: 100%;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+
+        .container button {
+            padding: 10px 20px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            margin: 0 auto;
+            display: block;
+        }
+
+        .container button:hover {
+            background-color: #555;
+        }
+    </style>
+    <link rel="stylesheet" href="/front/styles.css">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.1.2/dist/axios.min.js"></script>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/front/index.html">Home</a></li>
+                <li><a href="/front/books/booksH.html">Books</a></li>
+                <li><a href="/front/customers/customersH.html">Customers</a></li>
+                <li><a href="/front/loans/loans.H.html">Loans</a></li>
+
+            </ul>
+        </nav>
+    </header>
+    <div class="subnavbar">
+        <ul>
+            <li><a href="loans.H.html">List</a></li>
+            <li><a href="loanbook.html">Loan</a></li>
+            <li><a href="expiredLoans.html">Expired Loans</a></li>
+        </ul>
+    </div>
+
+
+
+
+
+    <div class="container">
+        <div class="title">Add loan:</div>
+        ID of customer<br>
+        <input id="custID" placeholder="Get the ID from customers"><br>
+        ID of book<br>
+        <input id="bookID" placeholder="Get the ID from books"><br>
+        Date of loan<br>
+        <input id="loanDate" placeholder="DD/MM/YY"><br>
+        <button onclick="addLoan()">Sumbit</button>
+    </div>
+
+    <div id="display"></div>
+
+
+    <script>
+
+        const MY_SERVER = 'http://127.0.0.1:5000';
+
+        const addLoan = async () => {
+            const custID = document.getElementById('custID').value;
+            const bookID = document.getElementById('bookID').value;
+
+            //Getting data from books to find out what type of the books is to dermiinate the return date
+            const booksServer = await axios.get(`${MY_SERVER}/show-books`);
+            const customersServer = await axios.get(MY_SERVER + '/show-customers')
+            const custData = customersServer.data
+            const booksData = booksServer.data;
+
+            // Check if the bookID exists in booksData
+            if (booksData.some(book => book.id == bookID) && custData.some(cust => cust.id == custID)) {
+                console.log(`BookID ${bookID} and CustID ${custID} exists`);
+
+                // Retrieve the bookType based on the bookID
+                const bookType = booksData.find(book => book.id == bookID).type;
+                const bookQuantity = booksData.find(book => book.id == bookID).quantity
+                console.log(bookQuantity);
+                console.log(bookType);
+                const loanDateStr = document.getElementById('loanDate').value;
+                const [day, month, year] = loanDateStr.split('/').map(Number);
+                const loanDate = new Date(year, month - 1, day);
+                const formattedDate = loanDate.toLocaleDateString('en-GB');
+                const returnDate = new Date(loanDate);
+
+                if (bookQuantity > 0) {
+                    if (bookType == 1) {
+                        returnDate.setDate(loanDate.getDate() + 10);
+                        const formattedReturnDate = returnDate.toLocaleDateString('en-GB');
+                        const data = {
+                            custid: custID,
+                            bookid: bookID,
+                            loandate: formattedDate,
+                            returndate: formattedReturnDate
+                        };
+                        await axios.post(MY_SERVER + "/add-loan", data)
+                        updateQuantity()
+                    } else if (bookType == 2) {
+                        returnDate.setDate(loanDate.getDate() + 5);
+                        const formattedReturnDate = returnDate.toLocaleDateString('en-GB');
+                        const data = {
+                            custid: custID,
+                            bookid: bookID,
+                            loandate: formattedDate,
+                            returndate: formattedReturnDate
+                        };
+                        await axios.post(MY_SERVER + "/add-loan", data)
+                        updateQuantity()
+                    } else if (bookType == 3) {
+                        returnDate.setDate(loanDate.getDate() + 2);
+                        const formattedReturnDate = returnDate.toLocaleDateString('en-GB');
+                        const data = {
+                            custid: custID,
+                            bookid: bookID,
+                            loandate: formattedDate,
+                            returndate: formattedReturnDate
+                        };
+                        await axios.post(MY_SERVER + "/add-loan", data)
+                        updateQuantity()
+                    }
+                } else {
+                    alert('Out of books')
+                }
+
+
+            } else {
+                console.log('Book ID and custID doesnt exist');
+            }
+        };
+
+
+        const updateQuantity = async () => {
+            const bookID = document.getElementById('bookID').value;
+            const booksData = await axios.get(MY_SERVER + '/show-books');
+            const book = booksData.data[bookID - 1];
+            const bookQuantity = booksData.data[bookID - 1].quantity//doing -1 because in lists index always start as 1
+            const updatedQuantity = bookQuantity - 1 //Updating the quantity
+
+            const data = {
+                name: book.name,
+                author: book.author,
+                date_published: book.date_published,
+                quantity: updatedQuantity,
+                type: book.type
+            };
+
+            await axios.put(MY_SERVER + '/books-update/' + bookID, data);
+        }
+
+
+    </script>
+</body>
+
+</html>

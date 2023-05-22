@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <style>
+        /* body {
+            /* margin: 0;
+            padding: 0; */
+        /* } */ 
+
+        .container {
+            margin: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            background-color: #f5f5f5;
+        }
+
+        .container .title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .container input {
+            width: 100%;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+
+        .container button {
+            padding: 10px 20px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            margin: 0 auto; 
+            display: block; 
+        }
+
+        .container button:hover {
+            background-color: #555;
+        }
+    </style>
+    <link rel="stylesheet" href="/front/styles.css">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.1.2/dist/axios.min.js"></script>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/front/index.html">Home</a></li>
+                <li><a href="booksH.html">Books</a></li>
+                <li><a href="/front/customers/customersH.html">Customers</a></li>
+                <li><a href="/front/loans/loans.H.html">Loans</a></li>
+            </ul>
+        </nav>
+    </header>
+    <div class="subnavbar">
+        <ul>
+            <li><a href="booksH.html">List</a></li>
+            <li><a href="add_book.html">Add book</a></li>
+        </ul>
+    </div>
+
+    <div class="container">
+        <div class="title">Add a book:</div>
+        Name<br>
+        <input id="name" placeholder="Book name"><br>
+        Author<br>
+        <input id="author" placeholder="Author of the book"><br>
+        Year Published<br>
+        <input id="year_publish" placeholder="DD/MM/YYYY"><br>
+        Type(1-up to 10 days, 2- up to 5 days, 3 - up to 2 days)<br>
+        <input id="type_book" placeholder="Time of loan"><br>
+        Quantity<br>
+        <input id="quantity_books" placeholder="Quantity"><br>
+        <button onclick="addBook()">Sumbit</button>
+    </div>
+
+
+
+
+
+
+    <!--NOTE: SCRIPT ENTRY!!!-->
+    <script>
+        const MY_SERVER = 'http://127.0.0.1:5000'
+        const addBook = async () => {
+            const name = document.getElementById('name').value
+            const author = document.getElementById('author').value
+            const yearPublish = document.getElementById('year_publish').value
+            const typeBook = document.getElementById('type_book').value
+            const quantityBooks = document.getElementById('quantity_books').value   
+
+
+            data = {
+                name: name,
+                author: author,
+                date_published: yearPublish,
+                type: typeBook,
+                quantity: quantityBooks
+            }
+            await axios.post(MY_SERVER + "/add-book", data)
+        }
+    </script>
+</body>
+
+</html>

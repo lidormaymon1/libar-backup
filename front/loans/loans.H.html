@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <style>
+        td button {
+            height: 40px;
+            width: 100px;
+            margin-top: 5px;
+            position: relative;
+            left: 190px;
+            background-color: #333;
+            border: none;
+            color: white;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+
+        td button:hover {
+            background-color: #525252;
+        }
+
+        input {
+            width: 100%;
+            height: 45px;
+            border-radius: 30px;
+        }
+
+        #editLoanDisplay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            height: 550px;
+            width: 550px;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 30px;
+            box-shadow: 10px 0px 400px 10px rgba(51, 51, 51, 0.71);
+            -webkit-box-shadow: 10px 0px 400px 10px rgba(51, 51, 51, 0.71);
+            -moz-box-shadow: 10px 0px 400px 10px rgba(51, 51, 51, 0.71);
+            z-index: 100;
+            display: none;
+
+        }
+
+        #sumbitLoan {
+            height: 50px;
+            width: 200px;
+            margin-top: 5px;
+            position: relative;
+            background-color: #333;
+            border: none;
+            color: white;
+            border-radius: 30px;
+            cursor: pointer;
+            left: 200px;
+            top: 50px;
+
+        }
+
+        #sumbitLoan:hover {
+            background-color: #5e5c5c;
+        }
+
+        #closeButton {
+            font-size: 22px;
+            cursor: pointer;
+            position: relative;
+            left: 95%;
+        }
+    </style>
+     <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.8/css/line.css">
+    <link rel="stylesheet" href="/front/styles.css">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.1.2/dist/axios.min.js"></script>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/front/index.html">Home</a></li>
+                <li><a href="/front/books/booksH.html">Books</a></li>
+                <li><a href="/front/customers/customersH.html">Customers</a></li>
+                <li><a href="loanbook.html">Loans</a></li>
+            </ul>
+        </nav>
+    </header>
+    <div class="subnavbar">
+        <ul>
+            <li><a href="loans.H.html">List</a></li>
+            <li><a href="loanbook.html">Loan</a></li>
+            <li><a href="expiredLoans.html">Expired Loans</a></li>
+        </ul>
+    </div>
+
+    <div id="editLoanDisplay">
+        <div class="container">
+            <i class="uil uil-multiply" id="closeButton" onclick="closeEdit()"></i>
+            <div class="title">Edit loan</div>
+            Customer ID<br>
+            <input id="customer_id"><br>
+            Book ID<br>
+            <input id="book_id"><br>
+            Loan Date<br>
+            <input id="loan_date"><br>
+            Return Date<br>
+            <input id="return_date"><br>
+            <button id="sumbitLoan"">Sumbit</button>
+        </div>
+    </div>
+    <div class="title">Search loan by Customer ID</div><br>
+    <input id="search-loan" placeholder="Search..." type="search" oninput="searchLoans()"><br>
+    <div id="searchMSG"></div>
+    <div class="title" id="count_loans"></div>
+
+    <div id="loansDisplay"></div>
+
+
+
+    <script>
+        const MY_SERVER = 'http://127.0.0.1:5000'
+        const showLoans = async () => {
+            loans = await axios.get(MY_SERVER + '/show-loans');
+
+            loansDisplay.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Customer ID</th>
+                            <th>Book ID</th>
+                            <th>Loan Date</th>
+                            <th>Return Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${loans.data.map(data => `
+                        <tr>
+                            <td>${data.id}</td>
+                            <td>${data.custid}</td>
+                            <td>${data.bookid}</td>
+                            <td>${data.loandate}</td>
+                            <td>${data.returndate}</td>
+                            <td><button onclick="returnLoan(${data.id})">Return</button>
+                            <button onclick="updateLoan(${data.id})">Edit</button></td>
+                        </tr> `
+            )
+                    .join("")}
+                    </tbody>
+                </table>`
+        };
+
+        showLoans()
+
+        const countLoans = async () => {
+            const count = await axios.get(MY_SERVER + '/show-loans')
+            count_loans.innerHTML = `Loans record:${count.data.length}`
+        }
+
+        countLoans()
+
+        const returnLoan = async (id) => {
+            const loansData = await axios.get(MY_SERVER + '/show-loans');
+            const loan = loansData.data.find(data => data.id === id);
+            await axios.delete(`${MY_SERVER}/deleteLoan/${id}`);
+            updateQuantity(loan.bookid);
+            showLoans();
+        }
+
+        const updateQuantity = async (bookID) => {
+            const booksData = await axios.get(MY_SERVER + '/show-books');
+            const book = booksData.data[bookID - 1];
+            const bookQuantity = booksData.data[bookID - 1].quantity//doing -1 because in lists index always start as 1
+            const updatedQuantity = bookQuantity + 1 //Updating the quantity
+
+            const data = {
+                name: book.name,
+                author: book.author,
+                date_published: book.date_published,
+                quantity: updatedQuantity,
+                type: book.type
+            };
+
+            await axios.put(MY_SERVER + '/books-update/' + bookID, data);
+        }
+
+        const searchLoans = async () => {
+            const searchLoan = document.getElementById('search-loan').value;
+   
+
+            const response = await axios.get(`${MY_SERVER}/search-loan?search=${searchLoan}`);
+            const filteredData = response.data;
+            console.log(filteredData);
+            if (filteredData.some(info => info.custid.toString().includes(searchLoan))) {
+                loansDisplay.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Customer ID</th>
+                            <th>Book ID</th>
+                            <th>Loan Date</th>
+                            <th>Return Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filteredData.map(data => `
+                        <tr>
+                            <td>${data.id}</td>
+                            <td>${data.custid}</td>
+                            <td>${data.bookid}</td>
+                            <td>${data.loandate}</td>
+                            <td>${data.returndate}</td>
+                            <td><button onclick="returnLoan(${data.id})">Return</button>
+                            <button onclick="updateLoan(${data.id})">Edit</button></td>
+                        </tr> `
+            )
+                    .join("")}
+                    </tbody>
+                </table>`
+                searchMSG.innerHTML = ''
+            }else {
+                loansDisplay.innerHTML = ''
+                searchMSG.innerHTML = 'Customer not found'
+            }
+        };
+
+        const updateLoan = async (id) => {
+            openEdit()
+            //Declaring viralbes for inputs
+            const customerID = document.getElementById('customer_id')
+            const bookID = document.getElementById('book_id')
+            const loanDate = document.getElementById('loan_date')
+            const returnDate = document.getElementById('return_date')
+            //Server virable
+            const loansServer = await axios.get(MY_SERVER + '/show-loans');
+            const loan = loansServer.data.find(data => data.id == id)
+            //Entering values of data to inputs
+            customerID.value = loan.custid
+            bookID.value = loan.bookid
+            loanDate.value = loan.loandate
+            returnDate.value = loan.returndate
+
+
+            const submitButton = document.getElementById('sumbitLoan');
+            submitButton.addEventListener('click', () => {
+                submitEdit(id);
+            });
+
+        }
+
+        const submitEdit = async (loanID) => {
+            const customerID = document.getElementById('customer_id').value
+            const bookID = document.getElementById('book_id').value
+            const loanDate = document.getElementById('loan_date').value
+            const returnDate = document.getElementById('return_date').value
+
+            const data = {
+                custid: customerID,
+                bookid: bookID,
+                loandate: loanDate,
+                returndate:returnDate
+            };
+
+            await axios.put(MY_SERVER + '/loans-update/' + loanID, data);
+        };
+
+
+        const openEdit = () => {
+            const displayEdit = document.getElementById('editLoanDisplay')
+            displayEdit.style.display = 'block'
+            document.body.style.backgroundColor = '#DCDCDC'
+        }
+
+
+        const closeEdit = () => {
+            const displayEdit = document.getElementById('editLoanDisplay')
+            displayEdit.style.display = 'none'
+            document.body.style.backgroundColor = '#fff'
+        }
+
+    </script>
+
+</body>
+
+</html>

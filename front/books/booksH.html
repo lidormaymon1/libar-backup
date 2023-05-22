@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <style>
+        td button {
+            height: 40px;
+            width: 100px;
+            margin-top: 5px;
+            position: relative;
+            left: 25px;
+            background-color: #333;
+            border: none;
+            color: white;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+
+        td button:hover {
+            background-color: #525252;
+        }
+
+        input {
+            width: 100%;
+            height: 45px;
+            border-radius: 30px;
+        }
+
+        #editBookDisplay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            height: 550px;
+            width: 550px;
+            padding: 20px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 30px;
+            box-shadow: 10px 0px 400px 10px rgba(51, 51, 51, 0.71);
+            -webkit-box-shadow: 10px 0px 400px 10px rgba(51, 51, 51, 0.71);
+            -moz-box-shadow: 10px 0px 400px 10px rgba(51, 51, 51, 0.71);
+            z-index: 100;
+            display: none;
+            /* Hide the window by default */
+        }
+
+        #sumbitBook {
+            height: 50px;
+            width: 200px;
+            margin-top: 5px;
+            position: relative;
+            background-color: #333;
+            border: none;
+            color: white;
+            border-radius: 30px;
+            cursor: pointer;
+            left: 200px;
+            top: 50px;
+
+        }
+
+        #sumbitBook:hover {
+            background-color: #5e5c5c;
+        }
+
+        #closeButton {
+            font-size: 22px;
+            cursor: pointer;
+            position: relative;
+            left: 95%;
+        }
+    </style>
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.8/css/line.css">
+    <link rel="stylesheet" href="/front/styles.css">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.1.2/dist/axios.min.js"></script>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/front/index.html">Home</a></li>
+                <li><a href="booksH.html">Books</a></li>
+                <li><a href="/front/customers/customersH.html">Customers</a></li>
+                <li><a href="/front/loans/loans.H.html">Loans</a></li>
+            </ul>
+        </nav>
+    </header>
+    <div class="subnavbar">
+        <ul>
+            <li><a href="booksH.html">List</a></li>
+            <li><a href="add_book.html">Add book</a></li>
+        </ul>
+    </div>
+    <div id="editBookDisplay">
+        <div class="container">
+            <i class="uil uil-multiply" id="closeButton" onclick="closeEdit()"></i>
+            <div class="title">Edit book</div>
+            Name of the book<br>
+            <input id="book_name"><br>
+            Name of the author<br>
+            <input id="author_name"><br>
+            Date of released<br>
+            <input id="date_released"><br>
+            Quantity<br>
+            <input id="quantity_book"><br>
+            Type of the book(1:Up to 10 days, 2:Up to 5 days, 3:Up to 2 days)<br>
+            <input id="type_book"><br>
+            <button id="sumbitBook"">Sumbit</button>
+        </div>
+    </div>
+    <div class="title">Search book by its name or its author:</div><br>
+    <input type="search" id="search_book" placeholder="Search..." oninput="searchBooks()">
+
+    <div id="searchMSG"></div>
+    <div class="title" id="title"></div>
+    <div id="booksDisplay"></div>
+
+
+
+
+
+    <!--NOTE: SCRIPT ENTRY!!!-->
+    <script>
+        const MY_SERVER = 'http://127.0.0.1:5000'
+        const showBooks = async () => {
+            const booksData = await axios.get(MY_SERVER + '/show-books');
+            booksDisplay.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name of book</th>
+                            <th>Author</th>
+                            <th>Date of released</th>
+                            <th>Quantity</th>
+                            <th>Type</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${booksData.data.map(data => `
+                        <tr>
+                            <td>${data.id}</td>
+                            <td>${data.name}</td>
+                            <td>${data.author}</td>
+                            <td>${data.date_published}</td>
+                            <td>${data.quantity}</td>
+                            <td>${data.type}</td>
+                            <td><button onclick="deleteBook(${data.id})">Delete</button>
+                            <button onclick="updateBook(${data.id})">Edit</button></td>
+                        </tr> `
+            )
+                    .join("")}
+                    </tbody>
+                </table>`
+        };
+
+        showBooks()
+
+        const countBooks = async () => {
+            const response = await axios.get(MY_SERVER + '/show-books')
+            booksCount = response.data.length
+            console.log(booksCount);
+            title.innerHTML = `Books record:${booksCount}`
+        }
+
+        countBooks()
+        const deleteBook = async (bookid) => {
+            await axios.delete(`${MY_SERVER}/delete/${bookid}`)
+            showBooks()
+        }
+
+
+        const searchBooks = async () => {
+            const searchBookCap = document.getElementById('search_book');
+            const searchBook = searchBookCap.value.toLowerCase();
+
+            const response = await axios.get(`${MY_SERVER}/search-books?search=${searchBook}`);
+            const filteredData = response.data;
+
+            // Do something with the filtered data
+
+            if (filteredData.some(item =>
+                item.name.toLowerCase().includes(searchBook) ||
+                item.author.toLowerCase().includes(searchBook)
+            )) {
+                booksDisplay.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name of book</th>
+                            <th>Author</th>
+                            <th>Year of released</th>
+                            <th>Quantity</th>
+                            <th>Type</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filteredData
+                        .map(
+                            data => `
+                                    <tr>
+                                        <td>${data.id}</td>
+                                        <td>${data.name}</td>
+                                        <td>${data.author}</td>
+                                        <td>${data.date_published}</td>
+                                        <td>${data.quantity}</td>
+                                        <td>${data.type}</td>
+                                        <td>
+                                            <button onclick="deleteBook(${data.id})">Delete</button>
+                                            <button onclick="updateBook(${data.id})">Edit</button>
+                                        </td>
+                                    </tr>`
+                        )
+                        .join('')}
+                    </tbody>
+                </table>`;
+                searchMSG.innerHTML = ''; // Clear any previous "Book not found" message
+            } else {
+                // No books found, display a message
+                booksDisplay.innerHTML = '';
+                searchMSG.innerHTML = 'Book not found';
+            }
+        }
+
+
+        const updateBook = async (id) => {
+            openEdit()
+            //Declaring viralbes for inputs
+            const bookName = document.getElementById('book_name')
+            const author = document.getElementById('author_name')
+            const dateReleased = document.getElementById('date_released')
+            const bookQuantity = document.getElementById('quantity_book')
+            const typeBook = document.getElementById('type_book')
+            //Server virable
+            const booksServer = await axios.get(MY_SERVER + '/show-books');
+            const book = booksServer.data.find(data => data.id == id)
+            //Entering values of data to inputs
+            bookName.value = book.name
+            author.value = book.author
+            dateReleased.value = book.date_published
+            bookQuantity.value = book.quantity
+            typeBook.value = book.type
+
+            const submitButton = document.getElementById('sumbitBook');
+            submitButton.addEventListener('click', () => {
+                submitEdit(id);
+            });
+
+        }
+
+        const submitEdit = async (bookID) => {
+            const bookName = document.getElementById('book_name').value;
+            const author = document.getElementById('author_name').value;
+            const dateReleased = document.getElementById('date_released').value;
+            const bookQuantity = document.getElementById('quantity_book').value;
+            const typeBook = document.getElementById('type_book').value;
+
+            const data = {
+                name: bookName,
+                author: author,
+                date_published: dateReleased,
+                quantity: bookQuantity,
+                type: typeBook
+            };
+
+            await axios.put(MY_SERVER + '/books-update/' + bookID, data);
+        };
+
+
+        const openEdit = () => {
+            const displayEdit = document.getElementById('editBookDisplay')
+            displayEdit.style.display = 'block'
+            document.body.style.backgroundColor = '#DCDCDC'
+        }
+
+
+        const closeEdit = () => {
+            const displayEdit = document.getElementById('editBookDisplay')
+            displayEdit.style.display = 'none'
+            document.body.style.backgroundColor = '#fff'
+        }
+    </script>
+</body>
+
+</html>
